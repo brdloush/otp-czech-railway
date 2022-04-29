@@ -259,6 +259,32 @@ curl "http://localhost:8081/otp/routers/default/plan?fromPlace=49.78136,14.68183
 }
 ```
 
+More concise example:
+
+```curl
+curl "http://localhost:8081/otp/routers/default/plan?fromPlace=49.78136,14.68183,&toPlace=50.36118,13.8228,&time=11:30&date=04-29-2022&numItineraries=1" | jq -r '.plan.itineraries | .[0] | .legs | .[] | {"from":.from.name, "departure": .from.departure |  (. / 1000) | strftime("%Y-%m-%d %H:%M UTC"), "to": .to.name, "arrival": .to.arrival | (. / 1000) | strftime("%Y-%m-%d %H:%M UTC")}'
+```
+```json
+{
+  "from": "Benešov u Prahy",
+  "departure": "2022-04-29 09:49 UTC",
+  "to": "Praha hl. n.",
+  "arrival": "2022-04-29 10:30 UTC"
+}
+{
+  "from": "Praha hl. n.",
+  "departure": "2022-04-29 10:46 UTC",
+  "to": "Lovosice",
+  "arrival": "2022-04-29 11:58 UTC"
+}
+{
+  "from": "Lovosice",
+  "departure": "2022-04-29 12:02 UTC",
+  "to": "Louny",
+  "arrival": "2022-04-29 12:55 UTC"
+}
+```
+
 # Special thanks
 
 A huge thanks goes to [gtfscr/GVD2022](https://github.com/gtfscr/GVD2022).
