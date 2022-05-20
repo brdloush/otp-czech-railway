@@ -6,7 +6,26 @@ You should be aware that this docker image is very crude and I'm only using it f
 
 The image is based on `urbica/docker-otp` and uses the [gtfscr/GVD2022](https://github.com/gtfscr/GVD2022) scripts to prepare fresh GTFS data off a rather non-standard format of czech railway timetables.
 
-Usage example:
+## Building - x86
+
+```bash
+docker build -t brdloush/otp:x86-1.5.0 .
+```
+
+## Building - arm64
+
+First, build the `brdloush/otp:arm64` image by going into `otp-arm64` directory and issue following command:
+```bash
+docker build -t brdloush/otp:arm64 .
+``` 
+
+Once complete, run following command from root directory of `otp-czech-railway`:
+
+```bash
+docker build -t brdloush/otp-czech-railway:arm64-1.5.0 -f Dockerfile-arm64 .
+```
+
+## Usage example:
 
 ```bash
 docker run --rm -it -p 8081:8080 -e JAVA_OPTIONS=-Xmx1G otp-czech-railway --server --autoScan --verbose
