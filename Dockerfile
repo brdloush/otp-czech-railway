@@ -7,7 +7,8 @@ RUN wget https://download.geofabrik.de/europe/czech-republic-latest.osm.pbf -P w
 # make simplified pbf
 RUN osmium tags-filter work/czech-republic-latest.osm.pbf n/railway=halt,station,platform -o graphs/czech-republic/czech-republic-pubtran.osm.pbf -f pbf,add_metadata=false --overwrite
 # Downloads and build fresh version of GVD2022
-RUN cd /work; git clone https://github.com/gtfscr/GVD2022.git; cd /work/GVD2022; ./down.sh;
+RUN cd /work; git clone https://github.com/brdloush/GVD2022.git; cd /work/GVD2022; ./down.sh;
+#RUN cd /work; git clone https://github.com/gtfscr/GVD2022.git; cd /work/GVD2022; ./down.sh;
 RUN apt-get install -y python3
 RUN cd /work/GVD2022; ./make.sh;
 RUN cp /work/GVD2022/gtfs/vlakyCR.zip ./graphs/czech-republic/vlakyCR.zip
