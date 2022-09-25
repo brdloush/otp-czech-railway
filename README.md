@@ -1,34 +1,59 @@
 # otp-czech-railway
 
-This is a simple pre-baked docker image of OpenTripPlanner, containing railway OSM data and railway GTFS routing data for Czech Republic.
-
+> **WARNING !**
 You should be aware that this docker image is very crude and I'm only using it for a personal pet project. Still, it might help you by providing a basic working prototype.
 
-The image is based on `urbica/docker-otp` and uses the [gtfscr/GVD2022](https://github.com/gtfscr/GVD2022) scripts to prepare fresh GTFS data off a rather non-standard format of czech railway timetables.
+## Purpose of this image
+
+This is a simple pre-baked docker image of `OpenTripPlanner`, containing:
+
+- OSM data for railway stops/stations + highways in 1km surrounding of mentioned stops/stations
+- railway GTFS routing data for Czech Republic.
+
+The image can be used as a standalone "batteries included" REST API server which you can use for
+
+- searching for routes between railway stations/stops
+- generating Isochrone vector layers from a specific station (ie. map overlay showing how far you can get in 1,2,3,4,5 hours..)
+
+The image is based on [urbica/docker-otp](https://github.com/urbica/docker-otp) and uses the [gtfscr/GVD2022](https://github.com/gtfscr/GVD2022) scripts to prepare fresh GTFS data off a rather non-standard format of czech railway timetables.
+
+## Minimum requirements
+
+I'm running this image successfully (under very small load!!!) on a 2GB RAM VPS magine, which also run a few more containers of my pet project application.
+
+I've passed a `JAVA_OPTIONS=-Xmx1200m` environment property to OTP container. This value currently seems to be a reasonable minimum amount of heap that the OTP server needs for this custom-tailored czech-republic routing graph.
 
 ## Building - x86
 
+There's a hacky bash script which should take care of the build:
+
 ```bash
-docker build -t brdloush/otp:x86-1.5.0 .
+build.sh
 ```
+
+The build consists of following steps:
+
+- downloading the full OSM data for czech republic
+- simplifying the OSM data by distching non-important data. (only railway stations/stops and highways)
+- baking an overpass-turbo server based on the mentioned simplified OSM data
+- simplifying the OSM data yet once more (retaining just a 1km of highway data nearby to the railway stations/stops)
+- downloading the czech railway routing data
+- converting the czech railway routing data into GTFS
+- finally baking the simplified OSM data & GTFS data into the "batteries included" OTP image
 
 ## Building - arm64
 
-First, build the `brdloush/otp:arm64` image by going into `otp-arm64` directory and issue following command:
+The process should be similar, but there might be some arm versions of images missing here and there. I've managed to run a simpler version of this `otp-czech-railway` image using following simple arm image as a reference:
+
+Build the `brdloush/otp:arm64` image by going into `otp-arm64` directory and issue following command:
 ```bash
 docker build -t brdloush/otp:arm64 .
 ``` 
 
-Once complete, run following command from root directory of `otp-czech-railway`:
+## Sample usage:
 
 ```bash
-docker build -t brdloush/otp-czech-railway:arm64-1.5.0 -f Dockerfile-arm64 .
-```
-
-## Usage example:
-
-```bash
-docker run --rm -it -p 8081:8080 -e JAVA_OPTIONS=-Xmx1G otp-czech-railway --server --autoScan --verbose
+docker run --rm -it -p 8081:8080 -e JAVA_OPTIONS=-Xmx1200m otp-czech-railway --server --autoScan --verbose
 ```
 
 Once started, you can lookup stops ([docs here](http://dev.opentripplanner.org/apidoc/1.0.0/resource_GeocoderResource.html)):

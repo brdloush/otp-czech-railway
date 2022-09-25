@@ -1,0 +1,12 @@
+FROM ubuntu:22.04 AS osm-with-all-highways
+ENV BUILD_NUM=1
+RUN mkdir /work
+RUN apt-get update && apt-get install -y git osmium-tool wget make zip unzip gcc build-essential zlib1g-dev
+RUN wget https://download.geofabrik.de/europe/czech-republic-latest.osm.pbf -P /work
+RUN cd /work; osmium tags-filter czech-republic-latest.osm.pbf n/railway=halt,station,platform w/highway -o czech-republic-pubtran-highways.osm.pbf -f pbf,add_metadata=false --overwrite
+RUN cd /work; wget http://m.m.i24.cc/osmconvert.c; cat osmconvert.c | cc -x c - -lz -O3 -o osmconvert
+RUN cd /work; ./osmconvert czech-republic-pubtran-highways.osm.pbf | bzip2 > czech-republic-pubtran-highways.osm.bz2    
+
+FROM wiktorn/overpass-api AS overpass-with-osmdata
+ENV BUILD_NUM=1
+COPY --from=osm-with-all-highways /work/czech-republic-pubtran-highways.osm.bz2 /osm/czech-republic-pubtran-highways.osm.bz2
