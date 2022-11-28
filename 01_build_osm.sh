@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Build overpass server containins recent czech OSM data filtered to only contain rail data + all highways
+# Build overpass server containing recent czech OSM data filtered to only contain rail data + all highways
 docker build -t otp-czech-overpass . -f Dockerfile-overpass
 
 # Initialize the overpass server, so it can be started and queried later. 
@@ -27,7 +27,21 @@ while [ $OVERPASS_RUNNING == "0" ]; do
 done
 echo "Finished waiting, OVERPASS_RUNNING=$OVERPASS_RUNNING"
 
-# execute the overpass query
+# exit 0
+
+read -r -d '' OVERPASS_QUERY << EOM
+[out:xml][timeout:10000][maxsize:4294967296];
+node["railway"~"station|halt|stop"]->.a;
+(
+way(around.a: 500)[~"^(railway|highway)$"~".+"];
+node(w);
+);
+out geom;
+EOM
+
+OVERPASS_QUERY_ENCODED=`echo "$OVERPASS_QUERY" | perl -pe 's/([^a-zA-Z0-9_.!~*()'\''-])/sprintf("%%%02X", ord($1))/ge'`
+
+# execute the overpass query # 0h11m, 664MB osm file
 curl 'http://localhost:12345/api/interpreter' \
   -H 'Accept: */*' \
   -H 'Accept-Language: cs,en;q=0.9,cs-CZ;q=0.8' \
@@ -43,14 +57,10 @@ curl 'http://localhost:12345/api/interpreter' \
   -H 'sec-ch-ua: "Google Chrome";v="105", "Not)A;Brand";v="8", "Chromium";v="105"' \
   -H 'sec-ch-ua-mobile: ?0' \
   -H 'sec-ch-ua-platform: "Linux"' \
-  --data-raw 'data=%0A%5Bout%3Axml%5D%5Btimeout%3A10000%5D%3B%0Anode%5B%22railway%22~%22station%7Chalt%7Cstop%22%5D-%3E.a%3B%0Away%5B%22highway%22%5D(around.a%3A+1000)%3B%0Aout+geom%3B%0A' \
+  --data-raw "data=$OVERPASS_QUERY_ENCODED" \
   --compressed > work/czech-republic-pubtran-and-1km-highways.osm
 
-# kill the temporary docker image
+kill the temporary docker image
 docker kill overpass_czech_republic_build
 # remove the temporary docker image
 docker rm overpass_czech_republic_build
-
-# build the final image
-docker build -t otp-mk2 .
-

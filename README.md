@@ -21,54 +21,95 @@ The image is based on [urbica/docker-otp](https://github.com/urbica/docker-otp) 
 
 I'm running this image successfully (under very small load!!!) on a 2GB RAM VPS magine, which also run a few more containers of my pet project application.
 
-I've passed a `JAVA_OPTIONS=-Xmx1200m` environment property to OTP container. This value currently seems to be a reasonable minimum amount of heap that the OTP server needs for this custom-tailored czech-republic routing graph.
+At the moment, I'm using a `JAVA_OPTIONS=-Xmx1500m` environment property for my OTP container. This value currently seems to be a reasonable minimum amount of heap that the OTP server needs for this custom-tailored czech-republic routing graph.
 
-## Building - x86
+## Building
 
-There's a hacky bash script which should take care of the build:
+Currently the building is splitted into 2 steps:
 
-```bash
-build.sh
-```
+`01_build_osm.sh`
+- fetches OSM data for Czech Republic
+- filters the data, so that only roads & railway-related information is retained for faster processing
+- uses overpass api to only retain road network in close proximity of railroad stops
 
-The build consists of following steps:
-
-- downloading the full OSM data for czech republic
-- simplifying the OSM data by distching non-important data. (only railway stations/stops and highways)
-- baking an overpass-turbo server based on the mentioned simplified OSM data
-- simplifying the OSM data yet once more (retaining just a 1km of highway data nearby to the railway stations/stops)
-- downloading the czech railway routing data
-- converting the czech railway routing data into GTFS
-- finally baking the simplified OSM data & GTFS data into the "batteries included" OTP image
-
-## Building - arm64
-
-The process should be similar, but there might be some arm versions of images missing here and there. I've managed to run a simpler version of this `otp-czech-railway` image using following simple arm image as a reference:
-
-Build the `brdloush/otp:arm64` image by going into `otp-arm64` directory and issue following command:
-```bash
-docker build -t brdloush/otp:arm64 .
-``` 
+`02_build_otp.sh`
+- uses pre-built output of `01_build_osm.sh`
+- uses `brdloush/GVD2022` scripts to download recent railroad routing timetables & converts them to GTFS
+- builds a standalone docker image containing OpenTripPlanner + routing data (+ roads in proximity of stops)
 
 ## Sample usage:
 
 ```bash
-docker run --rm -it -p 8081:8080 -e JAVA_OPTIONS=-Xmx1200m otp-czech-railway --server --autoScan --verbose
+docker run --rm -it -p 8081:8080 -e JAVA_OPTIONS=-Xmx1500m brdloush/otp-czech-railway --server --autoScan --verbose
 ```
 
 Once started, you can lookup stops ([docs here](http://dev.opentripplanner.org/apidoc/1.0.0/resource_GeocoderResource.html)):
 
 ```bash
-curl "http://localhost:8081/otp/routers/default/geocode?query=Benešov" | jq .
+curl "http://localhost:8081/otp/routers/default/geocode?query=Benešov%20u%20Prahy" | jq .
 ```
 ```json
 [
-    {
-        "lat": 49.78136,
-        "lng": 14.68183,
-        "description": "stop Benešov u Prahy ",
-        "id": "1_5455106"
-    }
+  {
+    "lat": 49.78136,
+    "lng": 14.68183,
+    "description": "stop Benešov u Prahy ",
+    "id": "1_5455106"
+  },
+  {
+    "lat": 50.15949,
+    "lng": 14.3984,
+    "description": "stop Roztoky u Prahy ",
+    "id": "1_5454466"
+  },
+  {
+    "lat": 49.87935,
+    "lng": 14.42852,
+    "description": "stop Petrov u Prahy ",
+    "id": "1_5455726"
+  },
+  {
+    "lat": 49.87803,
+    "lng": 14.49997,
+    "description": "stop Jílové u Prahy ",
+    "id": "1_5455736"
+  },
+  {
+    "lat": 50.23711,
+    "lng": 14.49908,
+    "description": "stop Kojetice u Prahy ",
+    "id": "1_5454716"
+  },
+  {
+    "lat": 50.20574,
+    "lng": 14.5136,
+    "description": "stop Měšice u Prahy ",
+    "id": "1_5454726"
+  },
+  {
+    "lat": 49.91014,
+    "lng": 14.72024,
+    "description": "stop Mirošovice u Prahy ",
+    "id": "1_5455036"
+  },
+  {
+    "lat": 50.03941,
+    "lng": 14.24263,
+    "description": "stop Rudná u Prahy ",
+    "id": "1_5454916"
+  },
+  {
+    "lat": 50.10487,
+    "lng": 14.20926,
+    "description": "stop Hostouň u Prahy ",
+    "id": "1_5454076"
+  },
+  {
+    "lat": 49.73081,
+    "lng": 14.80548,
+    "description": "stop Městečko u Benešova ",
+    "id": "1_5455326"
+  }
 ]
 ```
 
@@ -104,12 +145,12 @@ curl "http://localhost:8081/otp/routers/default/plan?fromPlace=49.78136,14.68183
     },
     "itineraries": [
       {
-        "duration": 11190,
-        "startTime": 1651225740000,
-        "endTime": 1651236930000,
+        "duration": 11192,
+        "startTime": 1651225739000,
+        "endTime": 1651236931000,
         "walkTime": 0,
         "transitTime": 9990,
-        "waitingTime": 1200,
+        "waitingTime": 1202,
         "walkDistance": 0,
         "walkLimitExceeded": false,
         "elevationLost": 0,
@@ -130,10 +171,10 @@ curl "http://localhost:8081/otp/routers/default/plan?fromPlace=49.78136,14.68183
             "agencyUrl": "http://",
             "agencyTimeZoneOffset": 7200000,
             "routeType": 2,
-            "routeId": "1:434",
+            "routeId": "1:5982",
             "interlineWithPreviousLeg": false,
             "agencyId": "1154",
-            "tripId": "1:15245",
+            "tripId": "1:5982",
             "serviceDate": "20220429",
             "from": {
               "name": "Benešov u Prahy",
@@ -185,10 +226,10 @@ curl "http://localhost:8081/otp/routers/default/plan?fromPlace=49.78136,14.68183
             "agencyUrl": "http://",
             "agencyTimeZoneOffset": 7200000,
             "routeType": 2,
-            "routeId": "1:613",
+            "routeId": "1:18440",
             "interlineWithPreviousLeg": false,
             "agencyId": "1154",
-            "tripId": "1:613",
+            "tripId": "1:18440",
             "serviceDate": "20220429",
             "from": {
               "name": "Praha hl. n.",
@@ -240,10 +281,10 @@ curl "http://localhost:8081/otp/routers/default/plan?fromPlace=49.78136,14.68183
             "agencyUrl": "http://",
             "agencyTimeZoneOffset": 7200000,
             "routeType": 2,
-            "routeId": "1:1148",
+            "routeId": "1:645",
             "interlineWithPreviousLeg": false,
             "agencyId": "1154",
-            "tripId": "1:17238",
+            "tripId": "1:3274",
             "serviceDate": "20220429",
             "from": {
               "name": "Lovosice",
@@ -287,17 +328,17 @@ curl "http://localhost:8081/otp/routers/default/plan?fromPlace=49.78136,14.68183
     ]
   },
   "debugOutput": {
-    "precalculationTime": 6,
-    "pathCalculationTime": 69,
+    "precalculationTime": 46,
+    "pathCalculationTime": 120,
     "pathTimes": [
-      68
+      120
     ],
-    "renderingTime": 0,
-    "totalTime": 75,
+    "renderingTime": 1,
+    "totalTime": 167,
     "timedOut": false
   },
   "elevationMetadata": {
-    "ellipsoidToGeoidDifference": 47.04927914337423,
+    "ellipsoidToGeoidDifference": 46.996143281244606,
     "geoidElevation": false
   }
 }
