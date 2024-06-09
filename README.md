@@ -31,6 +31,7 @@ Currently the building is splitted into 2 steps:
 - fetches OSM data for Czech Republic
 - filters the data, so that only roads & railway-related information is retained for faster processing
 - uses overpass api to only retain road network in close proximity of railroad stops
+- the final step which downloads the overpass query can take ~15 minutes (on XPS13 9370 laptop, ie Intel(R) Core(TM) i7-8550U)
 
 `02_build_otp.sh`
 - uses pre-built output of `01_build_osm.sh`
@@ -40,7 +41,7 @@ Currently the building is splitted into 2 steps:
 ## Sample usage:
 
 ```bash
-docker run --rm -it -p 8081:8080 -e JAVA_OPTIONS=-Xmx1500m brdloush/otp-czech-railway --server --autoScan --verbose
+docker run --rm -it -p 8081:8080 -e JAVA_OPTIONS=-Xmx1500m brdloush/otp-czech-railway --serve --load
 ```
 
 Once started, you can lookup stops ([docs here](http://dev.opentripplanner.org/apidoc/1.0.0/resource_GeocoderResource.html)):
@@ -116,229 +117,327 @@ curl "http://localhost:8081/otp/routers/default/geocode?query=Benešov%20u%20Pra
 And also you can look up transit routes ([docs here](http://dev.opentripplanner.org/apidoc/1.0.0/resource_PlannerResource.html)):
 
 ```bash
-curl "http://localhost:8081/otp/routers/default/plan?fromPlace=49.78136,14.68183,&toPlace=50.36118,13.8228,&time=11:30&date=04-29-2022&numItineraries=1" | jq .
+DATE=`date -I` curl "http://localhost:8081/otp/routers/default/plan?fromPlace=49.78136,14.68183,&toPlace=50.36118,13.8228,&time=11:30&date=$DATE&numItineraries=1" | jq .
 ```
 ```json
 {
   "requestParameters": {
-    "date": "04-29-2022",
+    "date": "",
     "fromPlace": "49.78136,14.68183,",
     "toPlace": "50.36118,13.8228,",
     "time": "11:30",
     "numItineraries": "1"
   },
   "plan": {
-    "date": 1651224600000,
+    "date": 1717935623040,
     "from": {
       "name": "Origin",
       "lon": 14.68183,
       "lat": 49.78136,
-      "orig": "",
       "vertexType": "NORMAL"
     },
     "to": {
-      "name": "Destination",
+      "name": "Louny",
+      "stopId": "1:5454599",
       "lon": 13.8228,
       "lat": 50.36118,
-      "orig": "",
-      "vertexType": "NORMAL"
+      "vertexType": "TRANSIT"
     },
     "itineraries": [
       {
-        "duration": 11192,
-        "startTime": 1651225739000,
-        "endTime": 1651236931000,
-        "walkTime": 0,
-        "transitTime": 9990,
-        "waitingTime": 1202,
-        "walkDistance": 0,
+        "duration": 15054,
+        "startTime": 1717935726000,
+        "endTime": 1717950780000,
+        "walkTime": 534,
+        "transitTime": 11430,
+        "waitingTime": 3090,
+        "walkDistance": 607.63,
         "walkLimitExceeded": false,
+        "generalizedCost": 17330,
         "elevationLost": 0,
         "elevationGained": 0,
         "transfers": 2,
+        "fare": {
+          "fare": {},
+          "details": {}
+        },
         "legs": [
           {
-            "startTime": 1651225740000,
-            "endTime": 1651228200000,
+            "startTime": 1717935726000,
+            "endTime": 1717936260000,
             "departureDelay": 0,
             "arrivalDelay": 0,
             "realTime": false,
-            "distance": 39934.6104302931,
+            "distance": 607.63,
+            "generalizedCost": 1008,
+            "pathway": false,
+            "mode": "WALK",
+            "transitLeg": false,
+            "route": "",
+            "agencyTimeZoneOffset": 7200000,
+            "interlineWithPreviousLeg": false,
+            "from": {
+              "name": "Origin",
+              "lon": 14.68183,
+              "lat": 49.78136,
+              "departure": 1717935726000,
+              "vertexType": "NORMAL"
+            },
+            "to": {
+              "name": "Benešov u Prahy",
+              "stopId": "1:5455106",
+              "lon": 14.68271,
+              "lat": 49.77969,
+              "arrival": 1717936260000,
+              "departure": 1717936260000,
+              "vertexType": "TRANSIT"
+            },
+            "legGeometry": {
+              "points": "g|ynHkorxAq@VENBXKNCGGAG?IDMFKJSPGDG@E@EAEAECEECECEAGEg@AE?G@I@G@GBEBEBCBCn@YzAu@PGj@Ip@SbAk@XQVQG]BIz@a@nAm@JGFFf@UMAOHE@Jl@Hl@Fb@IDi@E",
+              "length": 55
+            },
+            "steps": [
+              {
+                "distance": 53.68,
+                "relativeDirection": "DEPART",
+                "streetName": "service road",
+                "absoluteDirection": "NORTH",
+                "stayOn": false,
+                "area": false,
+                "bogusName": true,
+                "lon": 14.6816628,
+                "lat": 49.7813275,
+                "elevation": "",
+                "walkingBike": false
+              },
+              {
+                "distance": 498.38,
+                "relativeDirection": "RIGHT",
+                "streetName": "path",
+                "absoluteDirection": "NORTH",
+                "stayOn": true,
+                "area": false,
+                "bogusName": true,
+                "lon": 14.6812529,
+                "lat": 49.7816405,
+                "elevation": "",
+                "walkingBike": false
+              },
+              {
+                "distance": 49.1,
+                "relativeDirection": "LEFT",
+                "streetName": "underpass",
+                "absoluteDirection": "WEST",
+                "stayOn": true,
+                "area": false,
+                "bogusName": true,
+                "lon": 14.6833531,
+                "lat": 49.7795855,
+                "elevation": "",
+                "walkingBike": false
+              },
+              {
+                "distance": 6.49,
+                "relativeDirection": "RIGHT",
+                "streetName": "steps",
+                "absoluteDirection": "NORTH",
+                "stayOn": true,
+                "area": false,
+                "bogusName": true,
+                "lon": 14.6827124,
+                "lat": 49.7794311,
+                "elevation": "",
+                "walkingBike": false
+              }
+            ],
+            "rentedBike": false,
+            "walkingBike": false,
+            "duration": 534
+          },
+          {
+            "startTime": 1717936260000,
+            "endTime": 1717938600000,
+            "departureDelay": 0,
+            "arrivalDelay": 0,
+            "realTime": false,
+            "distance": 40112.4,
+            "generalizedCost": 2940,
             "pathway": false,
             "mode": "RAIL",
-            "route": "722",
+            "transitLeg": true,
+            "route": "R 716 Vltava",
             "agencyName": "České dráhy, a.s.",
             "agencyUrl": "http://",
             "agencyTimeZoneOffset": 7200000,
             "routeType": 2,
-            "routeId": "1:5982",
+            "routeId": "1:12710",
             "interlineWithPreviousLeg": false,
-            "agencyId": "1154",
-            "tripId": "1:5982",
-            "serviceDate": "20220429",
+            "agencyId": "1:1154",
+            "tripId": "1:12710",
+            "serviceDate": "2024-06-09",
             "from": {
               "name": "Benešov u Prahy",
               "stopId": "1:5455106",
-              "lon": 14.68183,
-              "lat": 49.78136,
-              "departure": 1651225740000,
-              "orig": "",
+              "lon": 14.68271,
+              "lat": 49.77969,
+              "arrival": 1717936260000,
+              "departure": 1717936260000,
               "stopIndex": 6,
               "stopSequence": 48,
-              "vertexType": "TRANSIT",
-              "boardAlightType": "DEFAULT"
+              "vertexType": "TRANSIT"
             },
             "to": {
               "name": "Praha hl. n.",
               "stopId": "1:5457076",
               "lon": 14.43547,
               "lat": 50.08264,
-              "arrival": 1651228200000,
-              "departure": 1651229160000,
+              "arrival": 1717938600000,
+              "departure": 1717939680000,
               "stopIndex": 9,
               "stopSequence": 69,
-              "vertexType": "TRANSIT",
-              "boardAlightType": "DEFAULT"
+              "vertexType": "TRANSIT"
             },
             "legGeometry": {
-              "points": "o|ynHmprxA{zu@bza@_PtbJcmB|cA",
-              "length": 4
+              "points": "arynH}urxAiev@r_b@??sM|zI??ooBtkA",
+              "length": 6
             },
-            "routeShortName": "722",
-            "routeLongName": "R 722 Vltava",
-            "rentedBike": false,
-            "flexDrtAdvanceBookMin": 0,
-            "duration": 2460,
-            "transitLeg": true,
-            "steps": []
+            "steps": [],
+            "routeShortName": "716",
+            "routeLongName": "R 716 Vltava",
+            "duration": 2340
           },
           {
-            "startTime": 1651229160000,
-            "endTime": 1651233480000,
+            "startTime": 1717939680000,
+            "endTime": 1717946970000,
             "departureDelay": 0,
             "arrivalDelay": 0,
             "realTime": false,
-            "distance": 70589.90567414016,
+            "distance": 105862.37,
+            "generalizedCost": 8970,
             "pathway": false,
             "mode": "RAIL",
-            "route": "688",
+            "transitLeg": true,
+            "route": "R 608 Krušnohor",
             "agencyName": "České dráhy, a.s.",
             "agencyUrl": "http://",
             "agencyTimeZoneOffset": 7200000,
             "routeType": 2,
-            "routeId": "1:18440",
+            "routeId": "1:13556",
             "interlineWithPreviousLeg": false,
-            "agencyId": "1154",
-            "tripId": "1:18440",
-            "serviceDate": "20220429",
+            "agencyId": "1:1154",
+            "tripId": "1:13556",
+            "serviceDate": "2024-06-09",
             "from": {
               "name": "Praha hl. n.",
               "stopId": "1:5457076",
               "lon": 14.43547,
               "lat": 50.08264,
-              "arrival": 1651228200000,
-              "departure": 1651229160000,
+              "arrival": 1717938600000,
+              "departure": 1717939680000,
               "stopIndex": 0,
               "stopSequence": 1,
-              "vertexType": "TRANSIT",
-              "boardAlightType": "DEFAULT"
+              "vertexType": "TRANSIT"
             },
             "to": {
-              "name": "Lovosice",
-              "stopId": "1:5455859",
-              "lon": 14.0595,
-              "lat": 50.50948,
-              "arrival": 1651233480000,
-              "departure": 1651233720000,
-              "stopIndex": 7,
-              "stopSequence": 42,
-              "vertexType": "TRANSIT",
-              "boardAlightType": "DEFAULT"
+              "name": "Most",
+              "stopId": "1:5453399",
+              "lon": 13.65801,
+              "lat": 50.51151,
+              "arrival": 1717946970000,
+              "departure": 1717948980000,
+              "stopIndex": 5,
+              "stopSequence": 73,
+              "vertexType": "TRANSIT"
             },
             "legGeometry": {
-              "points": "owtpHulbwA_nDoYaIxqGerWv~Ny}h@ihH`eDx}QktKboUkpBboP",
-              "length": 8
+              "points": "owtpHulbwA_nDoY??ecjBtglA??zmAb}h@??z`QndJ??~hGhhU",
+              "length": 10
             },
-            "routeShortName": "688",
-            "routeLongName": "R 688 Labe",
-            "rentedBike": false,
-            "flexDrtAdvanceBookMin": 0,
-            "duration": 4320,
-            "transitLeg": true,
-            "steps": []
+            "steps": [],
+            "routeShortName": "608",
+            "routeLongName": "R 608 Krušnohor",
+            "duration": 7290
           },
           {
-            "startTime": 1651233720000,
-            "endTime": 1651236930000,
+            "startTime": 1717948980000,
+            "endTime": 1717950780000,
             "departureDelay": 0,
             "arrivalDelay": 0,
             "realTime": false,
-            "distance": 32016.87464352415,
+            "distance": 22808.29,
+            "generalizedCost": 4412,
             "pathway": false,
             "mode": "RAIL",
-            "route": "6108",
-            "agencyName": "České dráhy, a.s.",
+            "transitLeg": true,
+            "route": "Os 6737",
+            "agencyName": "Die Länderbahn CZ s.r.o.",
             "agencyUrl": "http://",
             "agencyTimeZoneOffset": 7200000,
             "routeType": 2,
-            "routeId": "1:645",
+            "routeId": "1:10176",
             "interlineWithPreviousLeg": false,
-            "agencyId": "1154",
-            "tripId": "1:3274",
-            "serviceDate": "20220429",
+            "agencyId": "1:3736",
+            "tripId": "1:25126",
+            "serviceDate": "2024-06-09",
             "from": {
-              "name": "Lovosice",
-              "stopId": "1:5455859",
-              "lon": 14.0595,
-              "lat": 50.50948,
-              "arrival": 1651233480000,
-              "departure": 1651233720000,
-              "stopIndex": 13,
-              "stopSequence": 19,
-              "vertexType": "TRANSIT",
-              "boardAlightType": "DEFAULT"
+              "name": "Most",
+              "stopId": "1:5453399",
+              "lon": 13.65801,
+              "lat": 50.51151,
+              "arrival": 1717946970000,
+              "departure": 1717948980000,
+              "stopIndex": 0,
+              "stopSequence": 1,
+              "vertexType": "TRANSIT"
             },
             "to": {
               "name": "Louny",
               "stopId": "1:5454599",
               "lon": 13.8228,
               "lat": 50.36118,
-              "arrival": 1651236930000,
-              "orig": "",
-              "stopIndex": 27,
-              "stopSequence": 38,
-              "vertexType": "TRANSIT",
-              "boardAlightType": "DEFAULT"
+              "arrival": 1717950780000,
+              "stopIndex": 6,
+              "stopSequence": 8,
+              "vertexType": "TRANSIT"
             },
             "legGeometry": {
-              "points": "gchsH{~xtAv}@vqC|aBkThnBlJrsCokExjAzy@jxBld@fQfmBbv@hyCzDvaEoOtiDjrCxmBbfBb~E`DzaFgI|bG",
-              "length": 15
+              "points": "}ohsHqqjrAbk@_fG??djHqgA??xnHafA??f}DozH??hh@{}C??z{@}sC",
+              "length": 12
             },
-            "routeShortName": "6108",
-            "routeLongName": "Os 6108",
-            "rentedBike": false,
-            "flexDrtAdvanceBookMin": 0,
-            "duration": 3210,
-            "transitLeg": true,
-            "steps": []
+            "steps": [],
+            "routeShortName": "6737",
+            "routeLongName": "Os 6737",
+            "duration": 1800
           }
         ],
-        "tooSloped": false
+        "tooSloped": false,
+        "arrivedAtDestinationWithRentedBicycle": false
       }
     ]
   },
+  "metadata": {
+    "searchWindowUsed": 6600,
+    "nextDateTime": 1717935780000,
+    "prevDateTime": 1717929023000
+  },
+  "previousPageCursor": "MXxQUkVWSU9VU19QQUdFfDIwMjQtMDYtMDlUMTE6NDA6MjNafHw0MG18U1RSRUVUX0FORF9BUlJJVkFMX1RJTUV8ZmFsc2V8MjAyNC0wNi0wOVQxMjoyMjowNlp8MjAyNC0wNi0wOVQxNjozMzowMFp8MnwxNzMzMHw=",
+  "nextPageCursor": "MXxORVhUX1BBR0V8MjAyNC0wNi0wOVQxMzoyNjowNlp8fDQwbXxTVFJFRVRfQU5EX0FSUklWQUxfVElNRXxmYWxzZXwyMDI0LTA2LTA5VDEyOjIyOjA2WnwyMDI0LTA2LTA5VDE2OjMzOjAwWnwyfDE3MzMwfA==",
   "debugOutput": {
-    "precalculationTime": 46,
-    "pathCalculationTime": 120,
-    "pathTimes": [
-      120
-    ],
-    "renderingTime": 1,
-    "totalTime": 167,
-    "timedOut": false
+    "precalculationTime": 208546,
+    "directStreetRouterTime": 35569953,
+    "transitRouterTime": 226226986,
+    "filteringTime": 4065724,
+    "renderingTime": 5746934,
+    "totalTime": 271926062,
+    "transitRouterTimes": {
+      "tripPatternFilterTime": 31320263,
+      "accessEgressTime": 6584711,
+      "raptorSearchTime": 139594996,
+      "itineraryCreationTime": 48663807
+    }
   },
   "elevationMetadata": {
-    "ellipsoidToGeoidDifference": 46.996143281244606,
+    "ellipsoidToGeoidDifference": 46.713641965970574,
     "geoidElevation": false
   }
 }
@@ -347,26 +446,32 @@ curl "http://localhost:8081/otp/routers/default/plan?fromPlace=49.78136,14.68183
 More concise example:
 
 ```curl
-curl "http://localhost:8081/otp/routers/default/plan?fromPlace=49.78136,14.68183,&toPlace=50.36118,13.8228,&time=11:30&date=04-29-2022&numItineraries=1" | jq -r '.plan.itineraries | .[0] | .legs | .[] | {"from":.from.name, "departure": .from.departure |  (. / 1000) | strftime("%Y-%m-%d %H:%M UTC"), "to": .to.name, "arrival": .to.arrival | (. / 1000) | strftime("%Y-%m-%d %H:%M UTC")}'
+DATE=`date -I` curl "http://localhost:8081/otp/routers/default/plan?fromPlace=49.78136,14.68183,&toPlace=50.36118,13.8228,&time=11:30&date=$DATE&numItineraries=1" | jq -r '.plan.itineraries | .[0] | .legs | .[] | {"from":.from.name, "departure": .from.departure |  (. / 1000) | strftime("%Y-%m-%d %H:%M UTC"), "to": .to.name, "arrival": .to.arrival | (. / 1000) | strftime("%Y-%m-%d %H:%M UTC")}'
 ```
 ```json
 {
+  "from": "Origin",
+  "departure": "2024-06-09 12:22 UTC",
+  "to": "Benešov u Prahy",
+  "arrival": "2024-06-09 12:31 UTC"
+}
+{
   "from": "Benešov u Prahy",
-  "departure": "2022-04-29 09:49 UTC",
+  "departure": "2024-06-09 12:31 UTC",
   "to": "Praha hl. n.",
-  "arrival": "2022-04-29 10:30 UTC"
+  "arrival": "2024-06-09 13:10 UTC"
 }
 {
   "from": "Praha hl. n.",
-  "departure": "2022-04-29 10:46 UTC",
-  "to": "Lovosice",
-  "arrival": "2022-04-29 11:58 UTC"
+  "departure": "2024-06-09 13:28 UTC",
+  "to": "Most",
+  "arrival": "2024-06-09 15:29 UTC"
 }
 {
-  "from": "Lovosice",
-  "departure": "2022-04-29 12:02 UTC",
+  "from": "Most",
+  "departure": "2024-06-09 16:03 UTC",
   "to": "Louny",
-  "arrival": "2022-04-29 12:55 UTC"
+  "arrival": "2024-06-09 16:33 UTC"
 }
 ```
 

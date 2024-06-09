@@ -1,4 +1,4 @@
 #!/bin/bash
 
 # build the final image
-docker build -t otp-czech-railway --build-arg build_date=`date -I` .
+docker build -t brdloush/otp-czech-railway --build-arg build_date=`date -I` .

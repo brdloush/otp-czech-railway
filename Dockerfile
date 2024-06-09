@@ -23,13 +23,13 @@ ADD work/czech-republic-pubtran-and-1km-highways.osm /work/czech-republic-pubtra
 RUN cd /work; osmium cat -o czech-republic-pubtran-and-1km-highways.osm.pbf czech-republic-pubtran-and-1km-highways.osm
 
 
-FROM brdloush/docker-otp:latest
-RUN mkdir -p /var/otp/graphs/czech-republic
-COPY --from=convert-osm-to-pbf /work/czech-republic-pubtran-and-1km-highways.osm.pbf /var/otp/graphs/czech-republic
-COPY --from=build-dataset-stage /graphs/czech-republic/vlakyCR.zip /var/otp/graphs/czech-republic
-ENV BUILD=2024-06-08-b1
-RUN export JAVA_OPTIONS="-Xmx10g -Xms10g --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.io=ALL-UNNAMED"; otp --build /var/otp/graphs/czech-republic
+FROM opentripplanner/opentripplanner:2.5.0
+RUN mkdir -p /var/opentripplanner/czech-republic
+COPY --from=convert-osm-to-pbf /work/czech-republic-pubtran-and-1km-highways.osm.pbf /var/opentripplanner/czech-republic
+COPY --from=build-dataset-stage /graphs/czech-republic/vlakyCR.zip /var/opentripplanner/czech-republic/vlakyCR-gtfs.zip
+ENV BUILD=2024-06-09-b4
+RUN export JAVA_OPTIONS="-Xmx10g -Xms10g --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.io=ALL-UNNAMED"; java -cp @/app/jib-classpath-file @/app/jib-main-class-file --build /var/opentripplanner/czech-republic --save
 RUN date --utc +%FT%T.000Z > /build-datetime
-COPY copy-version-info.sh /opt/otp/copy-version-info.sh
-RUN chmod +x /opt/otp/copy-version-info.sh
-ENV INIT_SCRIPT=./copy-version-info.sh
+COPY opentripplanner/docker-entrypoint.sh /docker-entrypoint.sh
+COPY opentripplanner/otp-config.json /var/opentripplanner/czech-republic/
+RUN chmod +x /docker-entrypoint.sh
