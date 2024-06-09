@@ -60,7 +60,7 @@ curl 'http://localhost:12345/api/interpreter' \
   --data-raw "data=$OVERPASS_QUERY_ENCODED" \
   --compressed > work/czech-republic-pubtran-and-1km-highways.osm
 
-kill the temporary docker image
+# kill the temporary docker image
 docker kill overpass_czech_republic_build
 # remove the temporary docker image
 docker rm overpass_czech_republic_build
