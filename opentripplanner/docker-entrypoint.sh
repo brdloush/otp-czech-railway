@@ -6,4 +6,4 @@ if [ -d /version-info ]; then
 fi
 
 # run OTP as usual
-java $JAVA_OPTS -cp @/app/jib-classpath-file @/app/jib-main-class-file /var/opentripplanner/czech-republic $@
+java $JAVA_OPTS -cp @/app/jib-classpath-file @/app/jib-main-class-file /var/otp-czech-republic $@
